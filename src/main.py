@@ -1,62 +1,96 @@
-import sys, os
-sys.path.append(os.path.dirname(__file__))  # Add src/ to path
-
-from src.parsers.whatsapp_parser import WhatsAppParser
-from src.ui.consent_dialog import ConsentDialog
-from db.fts_builder import FTSDatabase
-
+import os
+import sys
+from tkinter import Tk, filedialog
 import tkinter as tk
-from tkinter import filedialog
+
+# Ensure project root path
+ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(ROOT))
+
+from src.ui.consent_dialog import ConsentDialog
+from src.ui.vt_settings import VirusTotalSettings
+from src.importer.engine import ImportEngine
+
+try:
+    from src.security.virustotal_hash import check_file_with_virustotal
+    VT_AVAILABLE = True
+except ImportError:
+    VT_AVAILABLE = False
+
+
+def pick_chat_file():
+    root = Tk()
+    root.withdraw()
+    file = filedialog.askopenfilename(
+        title="Select Chat File",
+        filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+    )
+    root.destroy()
+    return file
+
 
 def main():
+    # === 1. Consent dialog ===
+    consent = ConsentDialog()
+    if not consent.run():
+        print("User declined consent. Exiting.")
+        return
+
     print("=== ChatConverge ===")
 
-    # Step 1: Show consent dialog
-    consent = ConsentDialog()
-    if not consent.get_consent():
-        print("User did not consent. Exiting.")
+    # === 2. Select chat file ===
+    chat_file = pick_chat_file()
+    if not chat_file:
+        print("No chat file selected.")
         return
 
-    # Step 2: Let user select exported WhatsApp chat file
-    root = tk.Tk()
-    root.withdraw()
-    filepath = filedialog.askopenfilename(
-        title="Select WhatsApp Chat .txt",
-        filetypes=[("Text files", "*.txt")]
-    )
-    if not filepath:
-        print("No file selected. Exiting.")
+    print(f"Selected file: {chat_file}")
+
+    # === 3. Universal importer ===
+    engine = ImportEngine()
+    try:
+        records = engine.import_file(chat_file)
+    except Exception as e:
+        print(f"[Error] Import failed: {e}")
         return
 
-    # Step 3: Parse and build DB
-    print(f"Parsing messages from: {filepath}")
-    parser = WhatsAppParser()
-    messages = parser.parse(filepath)
-    print(f"Parsed {len(messages)} messages.")
+    print(f"Imported {len(records)} normalized messages.")
 
-    db = FTSDatabase("chatconverge.db")
-    db.insert_messages(messages)
-    print("Messages saved to chatconverge.db (FTS5 search enabled).")
+    # TODO: Save records into your FTS search DB here
 
-    from src.security.virustotal_hash import check_file
+    # === 4. VirusTotal ===
+    print("\nVirusTotal Options:")
+    print("1. Scan file hash")
+    print("2. Open VirusTotal settings (enter API key)")
+    print("3. Skip")
 
-    # Suppose your attachments folder:
-    attachments = ["path/to/photo.jpg", "path/to/video.mp4"]
+    choice = input("Choose an option (1/2/3): ").strip()
 
-    VT_API_KEY = "YOUR_VIRUSTOTAL_API_KEY"  # You can set this via .env later
+    if choice == "2":
+        import tkinter as tk
+        settings_win = tk.Toplevel()
+        VirusTotalSettings(settings_win)
+        settings_win.grab_set()      # makes it modal
+        settings_win.wait_window()   # block until closed
+        return
 
-    for f in attachments:
-       check_file(f, VT_API_KEY)
+    
+    if choice == "1":
+        if not VT_AVAILABLE:
+            print("[Error] virustotal_hash.py missing.")
+            return
 
+        if os.getenv("VT_API_KEY") is None:
+            print("[Error] VirusTotal API key missing. Open settings.")
+            return
 
-    # Step 4: Query loop
-    while True:
-        q = input("\nSearch messages (or 'exit'): ").strip()
-        if q.lower() == "exit":
-            break
-        results = db.search(q)
-        for ts, sender, text in results:
-            print(f"[{ts}] {sender}: {text}")
+        print("\n[+] Scanning file hash with VirusTotal…")
+        result = check_file_with_virustotal(chat_file)
+        print("Result:", result)
+
+    print("\nDone.")
+
 
 if __name__ == "__main__":
     main()
+

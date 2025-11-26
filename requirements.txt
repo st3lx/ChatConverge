@@ -1,8 +1,11 @@
 sqlite-utils
-sqlcipher3
 python-dotenv
 requests
 tkinterweb
 nltk
 pandas
 matplotlib
+fastapi
+uvicorn[standard]
+beautifulsoup4
+
