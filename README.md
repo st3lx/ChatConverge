@@ -17,7 +17,7 @@ It works entirely **on your device** — no message data ever leaves your system
 ### Architecture
 Built with:
 - Python (backend + SQLite FTS5)
-- Electron or Flutter (UI)
+- Electron (UI)
 - SQLCipher (encryption)
 - Optional integration: VirusTotal API for file scans
 
