@@ -1,0 +1,10 @@
+sqlite-utils
+python-dotenv
+requests
+tkinterweb
+nltk
+pandas
+matplotlib
+fastapi
+uvicorn[standard]
+beautifulsoup4

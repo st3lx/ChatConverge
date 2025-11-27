@@ -1,0 +1,28 @@
+{
+  "name": "chatconverge",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "license": "MIT",
+  "scripts": {
+  "start": "node node_modules/electron/cli.js .",
+  "dev": "node node_modules/electron/cli.js . --dev",
+  "build": "npm"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.4.38",
+    "@types/node": "^24.10.1",
+    "concurrently": "^8.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^39.2.4",
+    "electron-builder": "^24.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "description": "A local-first, privacy-centric system that enables cross-platform message search, analysis, and safety auditing. \r Unifies message history across platforms, enables intelligent search and analysis, and integrates optional forensic-grade security scanning all under user control.",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": ""
+}
